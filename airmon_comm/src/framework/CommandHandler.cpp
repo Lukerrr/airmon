@@ -16,7 +16,6 @@ static ros::Publisher s_startPub;
 static ros::Publisher s_stopPub;
 static ros::Publisher s_heightPub;
 static ros::Publisher s_tolerancePub;
-static ros::Publisher s_densityPub;
 static ros::Publisher s_missionPub;
 
 void SendSimpleCmd(ros::Publisher& pub)
@@ -68,11 +67,6 @@ void OnCmdTolerance(void* data)
     SendFloatCmd(s_tolerancePub, *((float*)data));
 }
 
-void OnCmdDensity(void* data)
-{
-    SendFloatCmd(s_densityPub, *((float*)data));
-}
-
 void OnCmdMission(void* data)
 {
     airmon_comm::GsCmdMission msg;
@@ -103,7 +97,6 @@ CCommandHandler::CCommandHandler()
     m_handlers[CMD_STOP] = OnCmdStop;
     m_handlers[CMD_HEIGHT] = OnCmdHeight;
     m_handlers[CMD_TOLERANCE] = OnCmdTolerance;
-    m_handlers[CMD_DENSITY] = OnCmdDensity;
     m_handlers[CMD_MISSION] = OnCmdMission;
     
     ros::NodeHandle nh("~");
@@ -113,7 +106,6 @@ CCommandHandler::CCommandHandler()
     s_stopPub = nh.advertise<airmon_comm::GsCmdSimple>("in/cmd_stop", 1);
     s_heightPub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_height", 1);
     s_tolerancePub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_tolerance", 1);
-    s_densityPub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_density", 1);
     s_missionPub = nh.advertise<airmon_comm::GsCmdMission>("in/cmd_mission", 1);
 }
 

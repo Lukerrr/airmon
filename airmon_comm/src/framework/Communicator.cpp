@@ -21,7 +21,6 @@ size_t GetCmdDataSize(ECmdType type)
     case CMD_STOP:              return sizeof(SCmdStop);
     case CMD_HEIGHT:            return sizeof(SCmdHeight);
     case CMD_TOLERANCE:         return sizeof(SCmdTolerance);
-    case CMD_DENSITY:           return sizeof(SCmdDensity);
     case CMD_MISSION:           return sizeof(SCmdMission);
     case CMD_HEARTBEAT:         return sizeof(SCmdHeartbeat);
     default:

@@ -41,7 +41,6 @@ DECLARE_MSG(RSP_DRONE_STATE, SRspDroneState,
     uint32_t missionHash;
     float height;
     float tolerance;
-    float density;
 )
 
 typedef SRspDroneState SDroneState;

@@ -21,10 +21,6 @@ DECLARE_MSG(CMD_TOLERANCE, SCmdTolerance,
     float tolerance;
 )
 
-DECLARE_MSG(CMD_DENSITY, SCmdDensity,
-    float density;
-)
-
 DECLARE_MSG(CMD_MISSION, SCmdMission,
     struct Point
     {

@@ -31,8 +31,6 @@ void OnDroneStateUpdated(const airmon_comm::DroneState& msg)
     state.missionHash = msg.missionHash;
     state.height = msg.height;
     state.tolerance = msg.tolerance;
-    state.density = msg.density;
-
     state.bArmed = msg.armed != 0;
     state.charge = msg.charge;
 

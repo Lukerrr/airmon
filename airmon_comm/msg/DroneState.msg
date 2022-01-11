@@ -11,7 +11,6 @@ float32 charge
 uint32 missionHash
 float32 height
 float32 tolerance
-float32 density
 
 int8 armed
 int8 systemState
