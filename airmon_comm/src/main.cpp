@@ -32,29 +32,11 @@ void OnDroneStateUpdated(const airmon_comm::DroneState& msg)
     state.height = msg.height;
     state.tolerance = msg.tolerance;
     state.density = msg.density;
-    state.cloudSize = msg.cloudSize;
 
     state.bArmed = msg.armed != 0;
     state.charge = msg.charge;
 
     g_pComm->Send(state);
-}
-
-void OnPointCloudReceived(const airmon_comm::PointCloud& msg)
-{
-    const geometry_msgs::Vector3* cloud = msg.cloud.data();
-    int pointsNum = msg.cloud.size();
-    while(pointsNum > 0)
-    {
-        SPointCloud chunk;
-        chunk.size = pointsNum > SPointCloud::chunkMaxSize ? SPointCloud::chunkMaxSize : pointsNum;
-        memcpy(chunk.cloud, cloud, chunk.size * sizeof(geometry_msgs::Vector3));
-        cloud += chunk.size;
-        pointsNum -= chunk.size;
-        g_pComm->Send(chunk);
-    }
-    SRspCloudEnd endMsg;
-    g_pComm->Send(endMsg);
 }
 
 int main(int argc, char **argv)
@@ -65,7 +47,6 @@ int main(int argc, char **argv)
     int rate = nh.param("rate", COMM_RATE_DEF);
 
     ros::Subscriber droneStateSub = nh.subscribe("out/drone_state", 1, OnDroneStateUpdated);
-    ros::Subscriber pointCloudSub = nh.subscribe("out/point_cloud", 1, OnPointCloudReceived);
 
     ros::Rate loopRate(rate);
 

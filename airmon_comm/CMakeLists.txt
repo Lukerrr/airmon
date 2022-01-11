@@ -50,7 +50,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   DroneState.msg
-  PointCloud.msg
   GsCmdSimple.msg
   GsCmdMission.msg
   GsCmdFloat.msg

@@ -17,7 +17,6 @@ static ros::Publisher s_stopPub;
 static ros::Publisher s_heightPub;
 static ros::Publisher s_tolerancePub;
 static ros::Publisher s_densityPub;
-static ros::Publisher s_getCloudPub;
 static ros::Publisher s_missionPub;
 
 void SendSimpleCmd(ros::Publisher& pub)
@@ -57,11 +56,6 @@ void OnCmdStart(void* data)
 void OnCmdStop(void* data)
 {
     SendSimpleCmd(s_stopPub);
-}
-
-void OnCmdGetCloud(void* data)
-{
-    SendSimpleCmd(s_getCloudPub);
 }
 
 void OnCmdHeight(void* data)
@@ -110,7 +104,6 @@ CCommandHandler::CCommandHandler()
     m_handlers[CMD_HEIGHT] = OnCmdHeight;
     m_handlers[CMD_TOLERANCE] = OnCmdTolerance;
     m_handlers[CMD_DENSITY] = OnCmdDensity;
-    m_handlers[CMD_GET_CLOUD] = OnCmdGetCloud;
     m_handlers[CMD_MISSION] = OnCmdMission;
     
     ros::NodeHandle nh("~");
@@ -121,7 +114,6 @@ CCommandHandler::CCommandHandler()
     s_heightPub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_height", 1);
     s_tolerancePub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_tolerance", 1);
     s_densityPub = nh.advertise<airmon_comm::GsCmdFloat>("in/cmd_density", 1);
-    s_getCloudPub = nh.advertise<airmon_comm::GsCmdSimple>("in/cmd_get_cloud", 1);
     s_missionPub = nh.advertise<airmon_comm::GsCmdMission>("in/cmd_mission", 1);
 }
 
