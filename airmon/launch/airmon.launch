@@ -1,0 +1,11 @@
+<launch>
+    <node pkg="airmon_comm" type="comm" name="airmon_comm" output="screen">
+        <param name="port" type="int" value="54000"/>
+        <param name="rate" type="int" value="100"/>
+        <param name="timeout" type="int" value="5000"/>
+    </node>
+    <node pkg="airmon" type="main.py" name="airmon" output="screen">
+        <param name="rate" type="int" value="100"/>
+    </node>
+    <node pkg="rosserial_python" type="serial_node.py" name="rosserial_python" output="screen" />
+</launch>

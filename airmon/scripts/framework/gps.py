@@ -64,5 +64,3 @@ class CGpsSystem:
         self.heading = -Rad2Deg(np.arctan2(\
             self.__magFilterY.Filter(magVectorR.y, self.__dt),\
             self.__magFilterX.Filter(magVectorR.x, self.__dt)))
-        
-

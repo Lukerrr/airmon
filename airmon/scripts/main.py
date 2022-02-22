@@ -15,4 +15,5 @@ if __name__ == "__main__":
         system.Run()
     except rospy.ROSInterruptException as e:
         rospy.logerr("ROSInterruptException: %s", str(e))
-    system.OnExit()
+    finally:
+        system.OnExit()

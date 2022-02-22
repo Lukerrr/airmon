@@ -3,7 +3,6 @@
 
 #include "ros/ros.h"
 #include "airmon_comm/DroneState.h"
-#include "airmon_comm/PointCloud.h"
 #include "airmon_comm/GsCmdSimple.h"
 
 #include <sstream>

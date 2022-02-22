@@ -26,7 +26,6 @@ from airmon_comm.msg import GsCmdSimple
 ##  __rate - working loop execution rate in hertz
 ##  __systemState - current state of the system
 ##  __lastState - last known state of the system before disconnect
-##  __stateModes - quadrotor autopilot modes map for system's specific states
 ##  __takeoffPos - a position for takeoff
 ##  __landingPos - a position for landing
 ###
@@ -58,14 +57,6 @@ class CSystem:
         self.__rate = rospy.Rate(rate)
         self.__systemState = ESystemState.DISCONNECTED
         self.__lastState = ESystemState.IDLE
-        self.__stateModes = \
-        {\
-            ESystemState.TAKEOFF: "OFFBOARD",\
-            ESystemState.WORKING: "OFFBOARD",\
-            ESystemState.LANDING: "OFFBOARD"\
-        }
-        self.__modeSetForce = False
-        self.__modeSetIsDone = False
         self.__takeoffPos = None
         self.__landingPos = None
         self.__armSub = rospy.Subscriber("airmon_comm/in/cmd_arm", GsCmdSimple, self.__onCmdArm)
@@ -114,15 +105,6 @@ class CSystem:
                         rospy.loginfo("CSystem: reserved state '%s'", self.__lastState.name)
                     self.__setState(ESystemState.DISCONNECTED)
 
-            # Check is flight mode valid
-            if(not self.__modeSetIsDone or self.__modeSetForce):
-                requiredMode = self.__stateModes.get(self.__systemState)
-                curMode = self.__movCtrl.simState.mode
-                if(requiredMode != None and curMode != requiredMode):
-                    self.__movCtrl.SetMode(requiredMode)
-                else:
-                    self.__modeSetIsDone = True
-
             if(dt > 0.0):
                 # State DISCONNECTED
                 if(self.__systemState == ESystemState.DISCONNECTED):
@@ -164,20 +146,18 @@ class CSystem:
             else:
                 rospy.logwarn("CSystem: delta time was invalid (%f) at %f sec.", dt, curTime)
 
-            self.__movCtrl.DispatchPosition()
             self.__droneLst.SendData(self.__systemState.value)
             self.__rate.sleep()
 
     ## ROS node interrupt exception callback
     def OnExit(self):
-        self.__movCtrl.SetMode("AUTO.LAND")
+        self.__movCtrl.Land()
 
     ## Perform the system state transition
     def __setState(self, st):
         if(self.__systemState != st):
             rospy.loginfo("CSystem::setState: %s -> %s", self.__systemState.name, st.name)
             self.__systemState = st
-            self.__modeSetIsDone = False
         else:
             rospy.loginfo("CSystem::setState: '%s' state loop ignored", st.name)
 
