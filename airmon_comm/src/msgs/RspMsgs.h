@@ -43,4 +43,27 @@ DECLARE_MSG(RSP_DRONE_STATE, SRspDroneState,
     float tolerance;
 )
 
+DECLARE_MSG(RSP_AIR_SENS_CHUNK, SRspAirSensChunk,
+    struct AirSensData
+    {
+        float lat;
+        float lon;
+        float temp;
+        float hum;
+        float co;
+        float co2;
+        float nh3;
+        float no2;
+        float tvoc;
+    };
+
+    uint32_t size;
+
+    static const int chunkMaxSize = 64; 
+    AirSensData data[chunkMaxSize];
+)
+
+DECLARE_MSG_NO_PARAMS(RSP_AIR_SENS_END, SRspAirSensEnd)
+
 typedef SRspDroneState SDroneState;
+typedef SRspAirSensChunk SAirSens;
