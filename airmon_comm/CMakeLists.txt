@@ -53,6 +53,8 @@ add_message_files(
   GsCmdSimple.msg
   GsCmdMission.msg
   GsCmdFloat.msg
+  AirSensData.msg
+  AirSensDataArray.msg
 )
 
 ## Generate services in the 'srv' folder

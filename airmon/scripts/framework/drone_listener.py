@@ -13,6 +13,7 @@ from airmon_comm.msg import DroneState
 ##  __movCtrl - CMovementController instance ref to receive a local position data
 ##  __gps - CGpsSystem instance ref to receive a global position data
 ##  __mission - CMission instance ref to receive a mission data
+##  __airSens - CAirSens instance ref to receive a air sensors data
 ##  __batCharge - current battery charge in range [0.0; 1.0]
 ##  __chargeSub - battery state topic subscriber
 ##  __droneStatePub - drone state topic publisher
@@ -22,10 +23,11 @@ from airmon_comm.msg import DroneState
 ##  __onBatteryStateChanged - battery state topic callback function
 ######################################################################################
 class CDroneListener:
-    def __init__(self, movCtrl, gps, mission):
+    def __init__(self, movCtrl, gps, mission, airSens):
         self.__movCtrl = movCtrl
         self.__gps = gps
         self.__mission = mission
+        self.__airSens = airSens
         self.__batCharge = 0.0
         self.__chargeSub = rospy.Subscriber("mavros/battery", BatteryState, self.__onBatteryStateChanged)
         self.__droneStatePub = rospy.Publisher("airmon_comm/out/drone_state", DroneState, queue_size = 1)
@@ -39,6 +41,7 @@ class CDroneListener:
         state.missionHash = self.__mission.hash
         state.height = self.__mission.GetHeight()
         state.tolerance = self.__mission.GetTolerance()
+        state.airSensDataCount = self.__airSens.GetDataCount()
         if(self.__movCtrl.simState.connected):
             state.lat = self.__gps.lat
             state.lon = self.__gps.lon

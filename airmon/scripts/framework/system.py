@@ -9,6 +9,7 @@ from framework.mission import CMission
 from framework.mov_ctrl import CMovementController
 from framework.drone_listener import CDroneListener
 from framework.system_state import ESystemState
+from framework.air_sens import CAirSens
 
 from airmon_comm.msg import GsCmdSimple
 
@@ -44,6 +45,7 @@ from airmon_comm.msg import GsCmdSimple
 ##  __onCmdDisarm - cmd DISARM callback
 ##  __onCmdStart - cmd START callback
 ##  __onCmdStop - cmd STOP callback
+##  __getAirSensBeginSub - cmd GET_AIR_SENS callback
 ################################################################################
 class CSystem:
     def __init__(self):
@@ -51,9 +53,10 @@ class CSystem:
         rate = rospy.get_param("~rate", default = 50)
         self.__tfMan = CTfManager()
         self.__movCtrl = CMovementController()
-        self.__gps = CGpsSystem(self.__movCtrl, 1.0 / rate)
+        self.__gps = CGpsSystem()
+        self.__airSens = CAirSens(self.__gps)
         self.__mission = CMission(self.__movCtrl, self.__gps)
-        self.__droneLst = CDroneListener(self.__movCtrl, self.__gps, self.__mission)
+        self.__droneLst = CDroneListener(self.__movCtrl, self.__gps, self.__mission, self.__airSens)
         self.__rate = rospy.Rate(rate)
         self.__systemState = ESystemState.DISCONNECTED
         self.__lastState = ESystemState.IDLE
@@ -63,6 +66,7 @@ class CSystem:
         self.__disarmSub = rospy.Subscriber("airmon_comm/in/cmd_disarm", GsCmdSimple, self.__onCmdDisarm)
         self.__startSub = rospy.Subscriber("airmon_comm/in/cmd_start", GsCmdSimple, self.__onCmdStart)
         self.__stopSub = rospy.Subscriber("airmon_comm/in/cmd_stop", GsCmdSimple, self.__onCmdStop)
+        self.__getAirSensBeginSub = rospy.Subscriber("airmon_comm/in/air_sens", GsCmdSimple, self.__onCmdGetAirSens)
 
     ## The application working function
     def Run(self):
@@ -119,6 +123,8 @@ class CSystem:
 
                 # State TAKEOFF
                 elif(self.__systemState == ESystemState.TAKEOFF):
+                    self.__setState(ESystemState.WORKING) ## TODO: test
+                    """
                     if(self.__takeoffPos == None):
                         self.__takeoffPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
                     self.__movCtrl.SetPos(self.__takeoffPos[0], self.__takeoffPos[1], self.__mission.GetHeight())
@@ -126,15 +132,22 @@ class CSystem:
                         rospy.loginfo("CSystem: takeoff was done at height %f", self.__movCtrl.pos.z)
                         self.__setState(ESystemState.WORKING)
                         self.__takeoffPos = None
+                    """
 
                 # State WORKING
                 elif(self.__systemState == ESystemState.WORKING):
+                    print("Working")
+                    pass ## TODO: test
+                    """
                     if(self.__mission.Update()):
                         rospy.loginfo("CSystem: mission is done, landing...")
                         self.__setState(ESystemState.LANDING)
+                    """
 
                 # State LANDING
                 elif(self.__systemState == ESystemState.LANDING):
+                    self.__setState(ESystemState.IDLE) ## TODO: test
+                    """
                     if(self.__landingPos == None):
                         self.__landingPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
                     self.__movCtrl.SetPos(self.__landingPos[0], self.__landingPos[1], 0.0)
@@ -143,6 +156,7 @@ class CSystem:
                         self.__movCtrl.SetIsArmed(False)
                         self.__setState(ESystemState.IDLE)
                         self.__landingPos = None
+                    """
             else:
                 rospy.logwarn("CSystem: delta time was invalid (%f) at %f sec.", dt, curTime)
 
@@ -188,10 +202,10 @@ class CSystem:
             rospy.loginfo("CSystem: cannot work from state '%s'", self.__systemState.name)
         elif(not self.__movCtrl.simState.armed):
             rospy.loginfo("CSystem: cannot work - disarmed")
-        elif(not self.__mission.IsValid()):
-            rospy.loginfo("CSystem: cannot work - invalid mission")
-        elif(not self.__mission.Reset()):
-            rospy.loginfo("CSystem: cannot work - mission reset failed")
+        #elif(not self.__mission.IsValid()): TODO: test
+        #    rospy.loginfo("CSystem: cannot work - invalid mission") TODO: test
+        #elif(not self.__mission.Reset()): TODO: test
+        #    rospy.loginfo("CSystem: cannot work - mission reset failed") TODO: test
         else:
             self.__setState(ESystemState.TAKEOFF)
 
@@ -205,3 +219,8 @@ class CSystem:
                 rospy.loginfo("CSystem: cannot stop if disarmed")
         else:
             rospy.loginfo("CSystem: invalid working state '%s'", self.__systemState.name)
+
+    ## Cmd GET_AIR_SENS callback
+    def __onCmdGetAirSens(self, cmd):
+        rospy.loginfo("CSystem: command 'GET_AIR_SENS' received")
+        self.__airSens.PublishSensData()

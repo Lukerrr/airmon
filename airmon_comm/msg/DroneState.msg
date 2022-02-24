@@ -12,5 +12,7 @@ uint32 missionHash
 float32 height
 float32 tolerance
 
+int32 airSensDataCount
+
 int8 armed
 int8 systemState

@@ -75,7 +75,7 @@ class CMovementController:
     ## Arm/disarm quadrotor
     def SetIsArmed(self, isArmed):
         try:
-            self.__armingClient(True)
+            self.__armingClient(isArmed)
         except rospy.ServiceException as e:
             rospy.logerr("SetIsArmed error: %s", e.message)
 
