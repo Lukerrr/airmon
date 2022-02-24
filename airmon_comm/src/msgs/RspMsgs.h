@@ -41,6 +41,7 @@ DECLARE_MSG(RSP_DRONE_STATE, SRspDroneState,
     uint32_t missionHash;
     float height;
     float tolerance;
+    uint32_t airSensDataCount;
 )
 
 DECLARE_MSG(RSP_AIR_SENS_CHUNK, SRspAirSensChunk,
