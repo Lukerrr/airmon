@@ -22,8 +22,8 @@ enum ECmdType : EMsgType
 enum ERspType : EMsgType
 {
     RSP_DRONE_STATE = 0,
-    RSP_AIR_SENS_CHUNK = 0,
-    RSP_AIR_SENS_END = 0,
+    RSP_AIR_SENS_CHUNK,
+    RSP_AIR_SENS_END,
 
     RSP_MAX,
 };
