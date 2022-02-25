@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
 import rospy
+from clover import srv
 
 from std_msgs.msg import Float32MultiArray
 from airmon_comm.msg import AirSensData
 from airmon_comm.msg import AirSensDataArray
 
 class CAirSens():
-    def __init__(self, gps):
-        self.__gps = gps
+    def __init__(self):
         self.__data = []
         self.__airSensSub = rospy.Subscriber("Air_sens", Float32MultiArray, self.__onAirSensChanged)
         self.__airSensPub = rospy.Publisher("airmon_comm/out/air_sens", AirSensDataArray, queue_size = 10)
+        self.__getTelemetrySrv = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
 
     def ResetData(self):
         self.__data = []
@@ -30,25 +31,15 @@ class CAirSens():
             rospy.loginfo("CAirSens: air data is empty, nothing was published")
 
     def __onAirSensChanged(self, data):
+        telem = self.__getTelemetrySrv()
         airData = AirSensData()
-        airData.lat = self.__gps.lat
-        airData.lon = self.__gps.lon
-        airData.temp = data_array[0]
-        airData.hum = data_array[1]
-        airData.co = data_array[2]
-        airData.co2 = data_array[3]
-        airData.nh3 = data_array[4]
-        airData.no2 = data_array[5]
-        airData.tvoc = data_array[6]
+        airData.lat = telem.lat
+        airData.lon = telem.lon
+        airData.temp = data.data[0]
+        airData.hum = data.data[1]
+        airData.co = data.data[2]
+        airData.co2 = data.data[3]
+        airData.nh3 = data.data[4]
+        airData.no2 = data.data[5]
+        airData.tvoc = data.data[6]
         self.__data.append(airData)
-
-        print(f"""Air data (#{self.GetDataCount()}):
-            Lat = {airData.lat};
-            Lon = {airData.lon};
-            Temperature = {airData.temp};
-            Humidity = {airData.hum};
-            CO = {airData.co};
-            CO2 = {airData.co2};
-            NH3 = {airData.nh3};
-            NO2 = {airData.no2};
-            TVOC = {airData.tvoc}""")

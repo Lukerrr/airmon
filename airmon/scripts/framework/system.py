@@ -54,7 +54,7 @@ class CSystem:
         self.__tfMan = CTfManager()
         self.__movCtrl = CMovementController()
         self.__gps = CGpsSystem()
-        self.__airSens = CAirSens(self.__gps)
+        self.__airSens = CAirSens()
         self.__mission = CMission(self.__movCtrl, self.__gps)
         self.__droneLst = CDroneListener(self.__movCtrl, self.__gps, self.__mission, self.__airSens)
         self.__rate = rospy.Rate(rate)
@@ -66,7 +66,7 @@ class CSystem:
         self.__disarmSub = rospy.Subscriber("airmon_comm/in/cmd_disarm", GsCmdSimple, self.__onCmdDisarm)
         self.__startSub = rospy.Subscriber("airmon_comm/in/cmd_start", GsCmdSimple, self.__onCmdStart)
         self.__stopSub = rospy.Subscriber("airmon_comm/in/cmd_stop", GsCmdSimple, self.__onCmdStop)
-        self.__getAirSensBeginSub = rospy.Subscriber("airmon_comm/in/air_sens", GsCmdSimple, self.__onCmdGetAirSens)
+        self.__getAirSensBeginSub = rospy.Subscriber("airmon_comm/in/cmd_get_air_sens", GsCmdSimple, self.__onCmdGetAirSens)
 
     ## The application working function
     def Run(self):

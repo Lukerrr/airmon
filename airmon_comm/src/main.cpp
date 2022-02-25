@@ -46,7 +46,7 @@ void OnAirSensDataReceived(const airmon_comm::AirSensDataArray& msg)
     {
         SAirSens chunk;
         chunk.size = dataCount > SAirSens::chunkMaxSize ? SAirSens::chunkMaxSize : dataCount;
-        memcpy(chunk.data, airSensData, chunk.size * sizeof(geometry_msgs::Vector3));
+        memcpy(chunk.data, airSensData, chunk.size * sizeof(airmon_comm::AirSensData));
         airSensData += chunk.size;
         dataCount -= chunk.size;
         g_pComm->Send(chunk);
