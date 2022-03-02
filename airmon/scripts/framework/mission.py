@@ -48,6 +48,7 @@ class CMission:
         self.__pathGlobal = []
         self.__path = []
         self.__curIdx = 0
+        self.__movementStarted = False
 
         self.__targetHeight = 1.5
         self.__tolerance = 1.0
@@ -90,18 +91,9 @@ class CMission:
             return False
 
         rospy.loginfo("CMission: rebuilding path...")
-        
-        self.__path.clear()
-
-        # Converting path to local space
-        curPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
-        curPosGps = [self.__gps.lat, self.__gps.lon]
-        for pt in self.__pathGlobal:
-            dx, dy = GetCartesianOffset(curPosGps, pt)
-            self.__path.append([curPos[0] + dx, curPos[1] + dy])
 
         # Set current position as the return point
-        self.__path.append([curPos[0], curPos[1]])
+        self.__pathGlobal.append([self.__gps.lat, self.__gps.lon])
 
         # Reset target point
         self.__curIdx = -1
@@ -112,27 +104,32 @@ class CMission:
 
     ## Update the mission execution
     def Update(self):
-        if(self.__curIdx >= len(self.__path)):
+        if(self.__curIdx >= len(self.__pathGlobal)):
             # Last point is reached
             return True
 
-        curPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
-        trgPt = self.__path[self.__curIdx]
-        prevPt = self.__path[self.__curIdx - 1]
+        curPos = [self.__gps.lat, self.__gps.lon]
+        trgPt = self.__pathGlobal[self.__curIdx]
+        prevPt = self.__pathGlobal[self.__curIdx - 1]
 
-        # Set target position
-        self.__movCtrl.SetPos(trgPt[0], trgPt[1], self.__targetHeight)
+        if not self.__movementStarted:
+            # Set target position
+            self.__movCtrl.SetPosGl(trgPt[0], trgPt[1], self.__targetHeight)
+            self.__movementStarted = True
 
         # Set target yaw
-        dx = trgPt[0] - prevPt[0]
+        """dx = trgPt[0] - prevPt[0]
         dy = trgPt[1] - prevPt[1]
         targetYaw = np.arctan2(dy, dx)
-        self.__movCtrl.SetYaw(targetYaw)
+        self.__movCtrl.SetYaw(targetYaw)"""
         
-        xError = abs(curPos[0] - trgPt[0])
-        yError = abs(curPos[1] - trgPt[1])
+        """xError = abs(curPos[0] - trgPt[0])
+        yError = abs(curPos[1] - trgPt[1])"""
+
+        err = self.__movCtrl.GetNavigateError()
+        print(err.x, err.y, err.z)
         
-        if(xError <= self.__tolerance and yError <= self.__tolerance):
+        if(err.x <= self.__tolerance and err.y <= self.__tolerance):
             self.__incrementTarget()
             rospy.loginfo("CMission: passed waypoint #%d of #%d", self.__curIdx, len(self.__path))
 
@@ -149,6 +146,7 @@ class CMission:
     ## Increment target point index
     def __incrementTarget(self):
         self.__curIdx += 1
+        self.__movementStarted = False
         if(self.__curIdx < len(self.__path)):
             trgPt = self.__path[self.__curIdx]
             rospy.loginfo("CMission: target point updated to [%.3f, %.3f]", trgPt[0], trgPt[1])
@@ -164,7 +162,6 @@ class CMission:
     ## Target height topic callback
     def __onHeightChanged(self, height):
         self.__targetHeight = height.value
-        self.__movCtrl.SetParam("MIS_TAKEOFF_ALT", 0, self.__targetHeight)
         rospy.loginfo("CMission: target height updated (%f)", self.__targetHeight)
 
     ## Tolerance topic callback

@@ -49,6 +49,7 @@ class CMovementController:
 
         self.__getTelemetrySrv = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
         self.__navigateSrv = rospy.ServiceProxy('navigate', srv.Navigate)
+        self.__navigateGlSrv = rospy.ServiceProxy('navigate_global', srv.NavigateGlobal)
         self.__landSrv = rospy.ServiceProxy('land', Trigger)
 
         self.__stateSub = rospy.Subscriber("mavros/state", State, self.__onStateChanged)
@@ -81,7 +82,15 @@ class CMovementController:
 
     ## Set quadrotor target position
     def SetPos(self, x, y, z, arm = False):
-        self.__navigateSrv(x=x, y=y, z=z, yaw=0.0, speed=0.5, auto_arm=arm, frame_id='map')
+        self.__navigateSrv(x=x, y=y, z=z, yaw=0.0, speed=1.0, auto_arm=arm, frame_id='map')
+
+    ## Set quadrotor target position (global coordinates)
+    def SetPosGl(self, lat, lon, z, arm = False):
+        self.__navigateGlSrv(lat=lat, lon=lon, z=z, yaw=0.0, speed=1.0, auto_arm=arm, frame_id='map')
+
+    def GetNavigateError(self) -> Vec3:
+        telem = self.__getTelemetrySrv(frame_id='navigate_target')
+        return Vec3(telem.x, telem.y, telem.z)
 
     ## Checks is a drone currently at a given point
     def IsAtPos(self, pos: Vec3, eps: float = 0.2) -> bool:
