@@ -142,10 +142,10 @@ class CSystem:
                 elif(self.__systemState == ESystemState.LANDING):
                     if(self.__landingPos == None):
                         self.__landingPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
-                    self.__movCtrl.SetPos(self.__landingPos[0], self.__landingPos[1], 0.0)
-                    if(self.__movCtrl.pos.z <= 0.25):
-                        rospy.loginfo("CSystem: landing was done! Disarming...")
-                        self.__movCtrl.SetIsArmed(False)
+                        rospy.loginfo("CSystem: requesting land")
+                        self.__movCtrl.Land()
+                    if(not self.__movCtrl.simState.armed):
+                        rospy.loginfo("CSystem: landing was done!")
                         self.__setState(ESystemState.IDLE)
                         self.__landingPos = None
             else:

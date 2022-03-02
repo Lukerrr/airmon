@@ -88,6 +88,7 @@ class CMovementController:
     def SetPosGl(self, lat, lon, z, arm = False):
         self.__navigateGlSrv(lat=lat, lon=lon, z=z, yaw=0.0, speed=1.0, auto_arm=arm, frame_id='map')
 
+    ## Returns a distance vector to the navigate point
     def GetNavigateError(self) -> Vec3:
         telem = self.__getTelemetrySrv(frame_id='navigate_target')
         return Vec3(telem.x, telem.y, telem.z)

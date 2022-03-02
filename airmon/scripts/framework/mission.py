@@ -46,7 +46,6 @@ class CMission:
         self.__movCtrl = movCtrl
 
         self.__pathGlobal = []
-        self.__path = []
         self.__curIdx = 0
         self.__movementStarted = False
 
@@ -108,37 +107,25 @@ class CMission:
             # Last point is reached
             return True
 
-        curPos = [self.__gps.lat, self.__gps.lon]
         trgPt = self.__pathGlobal[self.__curIdx]
-        prevPt = self.__pathGlobal[self.__curIdx - 1]
 
         if not self.__movementStarted:
             # Set target position
             self.__movCtrl.SetPosGl(trgPt[0], trgPt[1], self.__targetHeight)
             self.__movementStarted = True
 
-        # Set target yaw
-        """dx = trgPt[0] - prevPt[0]
-        dy = trgPt[1] - prevPt[1]
-        targetYaw = np.arctan2(dy, dx)
-        self.__movCtrl.SetYaw(targetYaw)"""
-        
-        """xError = abs(curPos[0] - trgPt[0])
-        yError = abs(curPos[1] - trgPt[1])"""
+        err = self.__movCtrl.GetNavigateError().GetLength()
 
-        err = self.__movCtrl.GetNavigateError()
-        print(err.x, err.y, err.z)
-        
-        if(err.x <= self.__tolerance and err.y <= self.__tolerance):
+        if(err <= self.__tolerance):
             self.__incrementTarget()
-            rospy.loginfo("CMission: passed waypoint #%d of #%d", self.__curIdx, len(self.__path))
+            rospy.loginfo("CMission: passed waypoint #%d of #%d", self.__curIdx, len(self.__pathGlobal))
 
         return False
-    
+
     ## Returns current target height value
     def GetHeight(self):
         return self.__targetHeight
-    
+
     ## Returns current flight tolerance value
     def GetTolerance(self):
         return self.__tolerance
@@ -147,8 +134,8 @@ class CMission:
     def __incrementTarget(self):
         self.__curIdx += 1
         self.__movementStarted = False
-        if(self.__curIdx < len(self.__path)):
-            trgPt = self.__path[self.__curIdx]
+        if(self.__curIdx < len(self.__pathGlobal)):
+            trgPt = self.__pathGlobal[self.__curIdx]
             rospy.loginfo("CMission: target point updated to [%.3f, %.3f]", trgPt[0], trgPt[1])
 
     ## Mission path topic callback
