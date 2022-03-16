@@ -66,7 +66,7 @@ class smart_nav_service():
         self.__cur_pos = np.array([telem.x, telem.y, telem.z])
 
         if self.__nav_task is None:
-            return
+            self.__set_velocity(vx=0, vy=0, vz=0, frame_id='map', auto_arm=False)
 
         vel: np.ndarray = self.__calc_velocity(self.__cur_pos)
         vel_size: float = np.linalg.norm(vel)
