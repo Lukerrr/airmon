@@ -3,7 +3,6 @@
 import rospy
 
 from helpers.ros_globals import *
-from framework.tf_manager import CTfManager
 from framework.gps import CGpsSystem
 from framework.mission import CMission
 from framework.mov_ctrl import CMovementController
@@ -18,7 +17,6 @@ from airmon_comm.msg import GsCmdSimple
 ##
 ## Fields list:
 ###
-##  __tfMan - frame transforms broadcaster
 ##  __movCtrl - the movement control subsystem
 ##  __gps - global position subsystem
 ##  __mission - the mission management subsystem
@@ -51,7 +49,6 @@ class CSystem:
     def __init__(self):
         rospy.init_node("airmon", anonymous = True)
         rate = rospy.get_param("~rate", default = 50)
-        self.__tfMan = CTfManager()
         self.__movCtrl = CMovementController()
         self.__gps = CGpsSystem()
         self.__airSens = CAirSens()
@@ -79,80 +76,84 @@ class CSystem:
                 break
 
         rospy.loginfo("CSystem: begin working loop")
-        # Working loop
+
         while(ok()):
-            # Get delta time
-            curTime = now().to_sec()
-            dt = curTime - self.__time
-            self.__time = curTime
+            try:
+                self.__workingLoop()
+                self.__rate.sleep()
+            except Exception as e:
+                rospy.logerr(f"Unhandled exception {str(e)}")
 
-            self.__tfMan.UpdateTransforms()
+    def __workingLoop(self):
+        # Get delta time
+        curTime = now().to_sec()
+        dt = curTime - self.__time
+        self.__time = curTime
 
-            # Detect auto-disarm
-            if(not self.__movCtrl.simState.armed and self.__systemState.value > ESystemState.IDLE.value):
-                rospy.logwarn("CSystem: disarmed by autopilot!")
-                self.__setState(ESystemState.IDLE)
+        # Detect auto-disarm
+        if(not self.__movCtrl.simState.armed and self.__systemState.value > ESystemState.IDLE.value):
+            rospy.logwarn("CSystem: disarmed by autopilot!")
+            self.__setState(ESystemState.IDLE)
 
-            isWorking = self.__systemState.value > ESystemState.IDLE.value
+        isWorking = self.__systemState.value > ESystemState.IDLE.value
 
-            # Validate mission if working
-            if(isWorking and not self.__mission.IsValid()):
-                rospy.logwarn("CSystem: mission is invalid, landing...")
-                self.__setState(ESystemState.LANDING)
+        # Validate mission if working
+        if(isWorking and not self.__mission.IsValid()):
+            rospy.logwarn("CSystem: mission is invalid, landing...")
+            self.__setState(ESystemState.LANDING)
 
-            # Check is connected
-            if(self.__systemState != ESystemState.DISCONNECTED):
-                if(self.__movCtrl.simState.connected == False):
-                    rospy.logwarn("CSystem: disconnected from FMU!")
-                    self.__lastState = self.__systemState
-                    if(self.__lastState != ESystemState.IDLE):
-                        rospy.loginfo("CSystem: reserved state '%s'", self.__lastState.name)
-                    self.__setState(ESystemState.DISCONNECTED)
+        # Check is connected
+        if(self.__systemState != ESystemState.DISCONNECTED):
+            if(self.__movCtrl.simState.connected == False):
+                rospy.logwarn("CSystem: disconnected from FMU!")
+                self.__lastState = self.__systemState
+                if(self.__lastState != ESystemState.IDLE):
+                    rospy.loginfo("CSystem: reserved state '%s'", self.__lastState.name)
+                self.__setState(ESystemState.DISCONNECTED)
 
-            if(dt > 0.0):
-                # State DISCONNECTED
-                if(self.__systemState == ESystemState.DISCONNECTED):
-                    if(self.__movCtrl.simState.connected == True):
-                        self.__setState(self.__lastState)
-                        if(self.__systemState != ESystemState.IDLE):
-                            rospy.loginfo("CSystem: restored state '%s'", self.__systemState.name)
+        if(dt > 0.0):
+            # State DISCONNECTED
+            if(self.__systemState == ESystemState.DISCONNECTED):
+                if(self.__movCtrl.simState.connected == True):
+                    self.__setState(self.__lastState)
+                    if(self.__systemState != ESystemState.IDLE):
+                        rospy.loginfo("CSystem: restored state '%s'", self.__systemState.name)
 
-                # State IDLE
-                elif(self.__systemState == ESystemState.IDLE):
-                    pass
+            # State IDLE
+            elif(self.__systemState == ESystemState.IDLE):
+                pass
 
-                # State TAKEOFF
-                elif(self.__systemState == ESystemState.TAKEOFF):
-                    if(self.__takeoffPos == None):
-                        self.__takeoffPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
-                        self.__movCtrl.SetPos(self.__takeoffPos[0], self.__takeoffPos[1], self.__mission.GetHeight(), arm=True)
-                        #rospy.loginfo("CSystem: takeoff at %f, %f, %f", self.__takeoffPos[0], self.__takeoffPos[1], self.__mission.GetHeight())
-                    if(self.__movCtrl.pos.z >= self.__mission.GetHeight() * 0.9):
-                        rospy.loginfo("CSystem: takeoff was done at height %f", self.__movCtrl.pos.z)
-                        self.__setState(ESystemState.WORKING)
-                        self.__takeoffPos = None
+            # State TAKEOFF
+            elif(self.__systemState == ESystemState.TAKEOFF):
+                if(self.__takeoffPos == None):
+                    self.__takeoffPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
+                    self.__movCtrl.SetPos(self.__takeoffPos[0], self.__takeoffPos[1], self.__mission.GetHeight(), arm=True)
+                    #rospy.loginfo("CSystem: takeoff at %f, %f, %f", self.__takeoffPos[0], self.__takeoffPos[1], self.__mission.GetHeight())
+                if(self.__movCtrl.pos.z >= self.__mission.GetHeight() * 0.9):
+                    rospy.loginfo("CSystem: takeoff was done at height %f", self.__movCtrl.pos.z)
+                    self.__setState(ESystemState.WORKING)
+                    self.__takeoffPos = None
 
-                # State WORKING
-                elif(self.__systemState == ESystemState.WORKING):
-                    if(self.__mission.Update()):
-                        rospy.loginfo("CSystem: mission is done, landing...")
-                        self.__setState(ESystemState.LANDING)
+            # State WORKING
+            elif(self.__systemState == ESystemState.WORKING):
+                if(self.__mission.Update()):
+                    rospy.loginfo("CSystem: mission is done, landing...")
+                    self.__setState(ESystemState.LANDING)
 
-                # State LANDING
-                elif(self.__systemState == ESystemState.LANDING):
-                    if(self.__landingPos == None):
-                        self.__landingPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
-                        rospy.loginfo("CSystem: requesting land")
-                        self.__movCtrl.Land()
-                    if(not self.__movCtrl.simState.armed):
-                        rospy.loginfo("CSystem: landing was done!")
-                        self.__setState(ESystemState.IDLE)
-                        self.__landingPos = None
-            else:
-                rospy.logwarn("CSystem: delta time was invalid (%f) at %f sec.", dt, curTime)
+            # State LANDING
+            elif(self.__systemState == ESystemState.LANDING):
+                if(self.__landingPos == None):
+                    self.__landingPos = [self.__movCtrl.pos.x, self.__movCtrl.pos.y]
+                    rospy.loginfo("CSystem: requesting land")
+                    self.__movCtrl.Land()
+                if(not self.__movCtrl.simState.armed):
+                    rospy.loginfo("CSystem: landing was done!")
+                    self.__setState(ESystemState.IDLE)
+                    self.__landingPos = None
+        else:
+            rospy.logwarn("CSystem: delta time was invalid (%f) at %f sec.", dt, curTime)
 
-            self.__droneLst.SendData(self.__systemState.value)
-            self.__rate.sleep()
+        self.__droneLst.SendData(self.__systemState.value)
 
     ## ROS node interrupt exception callback
     def OnExit(self):
