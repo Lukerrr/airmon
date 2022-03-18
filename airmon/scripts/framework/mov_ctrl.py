@@ -8,7 +8,8 @@ from mavros_msgs.srv import SetMode
 from geometry_msgs.msg import PoseStamped
 from std_srvs.srv import Trigger
 
-from clover import srv
+from clover import srv as clover_srv
+from smart_nav import srv as smart_nav_srv
 
 from math_utils import Vec3, Rotator
 
@@ -47,14 +48,17 @@ class CMovementController:
     def __init__(self):
         self.simState = State()
 
-        self.__getTelemetrySrv = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
-        self.__navigateSrv = rospy.ServiceProxy('navigate', srv.Navigate)
-        self.__navigateGlSrv = rospy.ServiceProxy('navigate_global', srv.NavigateGlobal)
+        self.__getTelemetrySrv = rospy.ServiceProxy('get_telemetry', clover_srv.GetTelemetry)
+        self.__navigateSrv = rospy.ServiceProxy('smart_nav/navigate', clover_srv.Navigate)
+        self.__navigateGlSrv = rospy.ServiceProxy('smart_nav/navigate_global', clover_srv.NavigateGlobal)
+        self.__getNavVector = rospy.ServiceProxy('smart_nav/get_nav_vector', smart_nav_srv.GetNavVector)
         self.__landSrv = rospy.ServiceProxy('land', Trigger)
 
         self.__stateSub = rospy.Subscriber("mavros/state", State, self.__onStateChanged)
         self.__armingClient = rospy.ServiceProxy("mavros/cmd/arming", CommandBool)
         self.__setModeClient = rospy.ServiceProxy("mavros/set_mode", SetMode)
+
+        self.__speed = 0.5
 
     ## State topic callback function
     def __onStateChanged(self, newState):
@@ -82,16 +86,16 @@ class CMovementController:
 
     ## Set quadrotor target position
     def SetPos(self, x, y, z, arm = False):
-        self.__navigateSrv(x=x, y=y, z=z, yaw=0.0, speed=1.0, auto_arm=arm, frame_id='map')
+        self.__navigateSrv(x=x, y=y, z=z, yaw=0.0, speed=self.__speed, auto_arm=arm, frame_id='map')
 
     ## Set quadrotor target position (global coordinates)
     def SetPosGl(self, lat, lon, z, arm = False):
-        self.__navigateGlSrv(lat=lat, lon=lon, z=z, yaw=0.0, speed=1.0, auto_arm=arm, frame_id='map')
+        self.__navigateGlSrv(lat=lat, lon=lon, z=z, yaw=0.0, speed=self.__speed, auto_arm=arm, frame_id='map')
 
     ## Returns a distance vector to the navigate point
     def GetNavigateError(self) -> Vec3:
-        telem = self.__getTelemetrySrv(frame_id='navigate_target')
-        return Vec3(telem.x, telem.y, telem.z)
+        res = self.__getNavVector()
+        return Vec3(res.x, res.y, res.z)
 
     ## Checks is a drone currently at a given point
     def IsAtPos(self, pos: Vec3, eps: float = 0.2) -> bool:

@@ -1,10 +1,11 @@
 <launch>
+    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
     <node pkg="smart_nav" type="main.py" name="smart_nav" output="screen">
         <param name="rate" type="int" value="100"/>
-        <param name="zeta" type="double" value="0.5"/>
-        <param name="d_goal_thr" type="double" value="2.0"/>
-        <param name="nu" type="double" value="1.0"/>
+        <param name="zeta" type="double" value="1.0"/>
+        <param name="d_goal_thr" type="double" value="1.0"/>
+        <param name="nu" type="double" value="1.5"/>
         <param name="d_obst_thr" type="double" value="2.0"/>
+        <param name="ignore_z" type="bool" value="True"/>
     </node>
-    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
 </launch>
