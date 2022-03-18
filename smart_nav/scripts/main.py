@@ -156,7 +156,7 @@ class smart_nav_service():
 
         # Ignoring repulsive Z coordinate
         if self.__ignore_z:
-            vel_rep[3] = 0
+            vel_rep[2] = 0
 
         return vel_attr + vel_rep
 
@@ -195,12 +195,12 @@ class smart_nav_service():
 
         if self.__cur_pos is None:
             rospy.logerr(f"NO TELEMETRY DATA!")
-            return clover_srv.NavigateResponse(False, 'BAD_TELEM')
+            return clover_srv.NavigateGlobalResponse(False, 'BAD_TELEM')
 
         pos_map: np.ndarray = np.array(self.__global_to_local(req.lat, req.lon, req.z))
         self.__nav_task = navigate_task(pos_map, req.yaw, req.yaw_rate, req.speed, req.auto_arm)
 
-        return clover_srv.NavigateResponse(True, 'OK')
+        return clover_srv.NavigateGlobalResponse(True, 'OK')
 
     def __handle_get_nav_vector(self, req: smart_nav_srv.GetNavVectorRequest):
         if self.__nav_task is None:

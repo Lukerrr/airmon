@@ -24,12 +24,16 @@ from helpers.math_utils import *
 class CGpsSystem:
     def __init__(self):
         self.isValid = False
-        self.__getTelemetrySrv = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
         self.__gpsPosSub = rospy.Subscriber("mavros/global_position/raw/fix", NavSatFix, self.__onPositionChanged)
 
     ## Gps data topic callback
     def __onPositionChanged(self, data):
         self.isValid = data.status.status > data.status.STATUS_NO_FIX
+
+    ## Returns a telemetry struct from get_telemetry service
+    def __getTelemetrySrv(self):
+        getTelemetrySrvProxy = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
+        return getTelemetrySrvProxy()
 
     @property
     def lat(self):
