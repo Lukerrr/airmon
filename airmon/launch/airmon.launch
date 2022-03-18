@@ -1,15 +1,21 @@
 <launch>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_rplidar_broadcaster" args="0 0 0.07 0 0 0 base_link rplidar_link"/>
+    <include file="$(find rplidar_ros)/launch/rplidar.launch"/>
+
     <node pkg="airmon_comm" type="comm" name="airmon_comm" output="screen">
         <param name="port" type="int" value="54000"/>
         <param name="rate" type="int" value="100"/>
         <param name="timeout" type="int" value="5000"/>
     </node>
+
     <node pkg="airmon" type="main.py" name="airmon" output="screen">
         <param name="rate" type="int" value="100"/>
     </node>
+
     <node pkg="rosserial_python" type="serial_node.py" name="rosserial_python" output="screen">
         <param name="port" type="string" value="/dev/ttyUSB1"/>
         <param name="baud" type="int" value="57600"/>
     </node>
+
     <include file="$(find smart_nav)/launch/nav.launch"/>
 </launch>

@@ -1,5 +1,4 @@
 <launch>
-    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
     <node pkg="smart_nav" type="main.py" name="smart_nav" output="screen">
         <param name="rate" type="int" value="100"/>
         <param name="zeta" type="double" value="1.0"/>
